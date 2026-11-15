@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Outlast Trials Companion">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="42%" r="75%">
+      <stop offset="0%" stop-color="#1a1113"/>
+      <stop offset="65%" stop-color="#0c0b0e"/>
+      <stop offset="100%" stop-color="#050507"/>
+    </radialGradient>
+    <radialGradient id="iris" cx="42%" cy="36%" r="70%">
+      <stop offset="0%" stop-color="#ff7b6f"/>
+      <stop offset="26%" stop-color="#e33737"/>
+      <stop offset="62%" stop-color="#8f1d1d"/>
+      <stop offset="100%" stop-color="#2a0606"/>
+    </radialGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="10" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="512" height="512" rx="96" fill="url(#bg)"/>
+  <rect x="28" y="28" width="456" height="456" rx="72" fill="none" stroke="#2a2a33" stroke-width="4"/>
+  <path d="M48 256s78-118 208-118 208 118 208 118-78 118-208 118S48 256 48 256Z" fill="none" stroke="#e33737" stroke-width="12" filter="url(#glow)"/>
+  <circle cx="256" cy="256" r="76" fill="none" stroke="#3a0c0c" stroke-width="18"/>
+  <circle cx="256" cy="256" r="62" fill="url(#iris)" filter="url(#glow)"/>
+  <circle cx="256" cy="256" r="20" fill="#07070a"/>
+  <circle cx="238" cy="236" r="9" fill="#ffd7d2" opacity=".85"/>
+  <path d="M256 58v34M256 420v34M58 256h34M420 256h34" stroke="#e33737" stroke-width="10" stroke-linecap="round"/>
+  <path d="M256 104v26M256 382v26M104 256h26M382 256h26" stroke="#5c1616" stroke-width="6" stroke-linecap="round"/>
+  <text x="256" y="470" text-anchor="middle" font-family="Arial Narrow, Arial, sans-serif" font-size="34" font-weight="700" letter-spacing="12" fill="#6b675f">OT // C</text>
+</svg>

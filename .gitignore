@@ -1,0 +1,8 @@
+node_modules/
+release/
+android/
+dist/
+artifacts/
+*.log
+.DS_Store
+/build/icon.png

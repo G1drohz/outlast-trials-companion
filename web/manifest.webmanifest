@@ -1,0 +1,36 @@
+{
+  "name": "Outlast Trials Companion",
+  "short_name": "OT Companion",
+  "description": "Справочник, таймер с чеклистом и интерактивные карты для The Outlast Trials.",
+  "lang": "ru",
+  "dir": "ltr",
+  "start_url": "./#reference",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#08080a",
+  "theme_color": "#08080a",
+  "categories": ["games", "utilities", "reference"],
+  "icons": [
+    {
+      "src": "./icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Таймер испытания",
+      "short_name": "Таймер",
+      "url": "./#timer",
+      "icons": [{ "src": "./icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "Интерактивная карта",
+      "short_name": "Карта",
+      "url": "./#map",
+      "icons": [{ "src": "./icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "appId": "dev.g1drohz.outlasttrials",
+  "appName": "Outlast Trials Companion",
+  "webDir": "web",
+  "backgroundColor": "#08080a",
+  "android": {
+    "allowMixedContent": false,
+    "backgroundColor": "#08080a"
+  },
+  "server": {
+    "androidScheme": "https"
+  }
+}

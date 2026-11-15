@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#08080a" />
+  <meta name="description" content="Outlast Trials Companion: справочник по локациям, предметам и врагам, таймер с чеклистом и интерактивные карты испытаний." />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="OT Companion" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; script-src 'self'; connect-src 'self';" />
+  <title>Outlast Trials Companion</title>
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" href="./icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="./icons/icon.svg" />
+  <link rel="stylesheet" href="./css/style.css" />
+</head>
+<body>
+  <div class="noise" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <a class="brand" href="#reference" aria-label="Outlast Trials Companion">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 48 48" role="img">
+          <path d="M4 24s7-12 20-12 20 12 20 12-7 12-20 12S4 24 4 24Z" fill="none" stroke="currentColor" stroke-width="2.4"/>
+          <circle cx="24" cy="24" r="6.5" fill="none" stroke="currentColor" stroke-width="2.4"/>
+          <circle cx="24" cy="24" r="2.2" fill="currentColor"/>
+          <path d="M24 6v5M24 37v5M6 24h5M37 24h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </span>
+      <span class="brand-text">
+        <b>OUTLAST TRIALS</b>
+        <span>COMPANION / FIELD MANUAL</span>
+      </span>
+    </a>
+
+    <nav class="tabs" aria-label="Разделы">
+      <button class="tab is-active" data-view="reference" type="button"><span>01</span>Справочник</button>
+      <button class="tab" data-view="timer" type="button"><span>02</span>Таймер</button>
+      <button class="tab" data-view="map" type="button"><span>03</span>Карта</button>
+    </nav>
+
+    <div class="top-actions">
+      <button class="ghost install-btn" id="installBtn" type="button" hidden>Установить</button>
+      <span class="live-dot" title="Работает офлайн"><i></i>OFFLINE READY</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="view is-active" id="view-reference">
+      <div class="hero">
+        <div class="hero-copy">
+          <p class="kicker">MURKOFF PROGRAM // ДЕЛО REAGENT-07</p>
+          <h1>Выживи.<br />Запомни.<br /><em>Выйди.</em></h1>
+          <p class="hero-lead">Справочник по локациям, предметам и врагам, таймер с чеклистом задач и интерактивные схемы уровней. Всё сохраняется на устройстве и работает без интернета.</p>
+          <div class="hero-stats" id="heroStats"></div>
+        </div>
+        <div class="hero-visual" aria-hidden="true">
+          <div class="eye-ring">
+            <div class="eye-core"></div>
+            <div class="eye-scan"></div>
+          </div>
+          <div class="hero-stamp">REAGENT<br />FILE</div>
+        </div>
+      </div>
+
+      <div class="subnav" id="refTabs" role="tablist" aria-label="Справочник">
+        <button class="is-active" data-ref="maps" type="button">Локации <b id="countMaps"></b></button>
+        <button data-ref="items" type="button">Предметы <b id="countItems"></b></button>
+        <button data-ref="enemies" type="button">Враги <b id="countEnemies"></b></button>
+        <button data-ref="rigs" type="button">Риги <b id="countRigs"></b></button>
+      </div>
+
+      <div class="toolbar">
+        <label class="search">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/></svg>
+          <input id="searchInput" type="search" placeholder="Поиск: локация, предмет, враг, эффект…" autocomplete="off" />
+        </label>
+        <span class="result-count" id="resultCount"></span>
+      </div>
+
+      <div class="card-grid" id="refContent"></div>
+      <p class="empty-state" id="emptyState" hidden>Ничего не найдено. Попробуй другой запрос.</p>
+    </section>
+
+    <section class="view" id="view-timer">
+      <div class="section-head">
+        <div>
+          <p class="kicker">RUN CONTROL // СЕАНС</p>
+          <h2>Таймер испытания</h2>
+        </div>
+        <p>Выбери карту и программу, отметь задачи по ходу забега. Лучшее время и прогресс чеклиста хранятся отдельно для каждого испытания.</p>
+      </div>
+
+      <div class="timer-layout">
+        <div class="panel timer-panel">
+          <div class="field-row">
+            <label class="field">
+              <span>Локация</span>
+              <select id="mapSelect"></select>
+            </label>
+            <label class="field">
+              <span>Испытание</span>
+              <select id="trialSelect"></select>
+            </label>
+          </div>
+
+          <div class="timer-display" id="timerDisplay" aria-live="off">
+            <span id="timerMain">00:00</span><span class="timer-ms" id="timerMs">.0</span>
+          </div>
+
+          <div class="timer-meta">
+            <span id="trialKind" class="pill">—</span>
+            <span id="trialTarget" class="pill muted">Цель: —</span>
+            <span id="timerState" class="pill state">ГОТОВ</span>
+          </div>
+
+          <div class="timer-actions">
+            <button class="primary big" id="startBtn" type="button">Старт</button>
+            <button class="ghost big" id="resetTimer" type="button">Сброс</button>
+          </div>
+
+          <div class="timer-stats">
+            <div><b id="bestTime">—</b><span>лучшее время</span></div>
+            <div><b id="attempts">0</b><span>забегов</span></div>
+            <div><b id="doneCount">0/0</b><span>задач</span></div>
+          </div>
+
+          <div class="timer-warning" id="timerWarning">Выход открыт. Не останавливайся.</div>
+        </div>
+
+        <div class="panel checklist-panel">
+          <div class="panel-head">
+            <h3>Чеклист задач</h3>
+            <button class="ghost small" id="checkAll" type="button">Отметить всё</button>
+          </div>
+          <div class="progress"><div class="progress-fill" id="checkProgress"></div></div>
+          <ul class="checklist" id="checklist"></ul>
+          <p class="hint"><kbd>Пробел</kbd> — старт/пауза. Отметки и таймер сохраняются автоматически.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="view-map">
+      <div class="section-head">
+        <div>
+          <p class="kicker">TACTICAL OVERVIEW // СХЕМА</p>
+          <h2>Интерактивная карта</h2>
+        </div>
+        <p>Нажимай на зоны, чтобы отметить пройденное. Схемы упрощённые — они показывают связи и типы зон, а не точную геометрию игры.</p>
+      </div>
+
+      <div class="chips" id="mapChips"></div>
+
+      <div class="map-layout">
+        <div class="panel map-panel">
+          <div class="map-toolbar">
+            <div>
+              <h3 id="mapTitle">—</h3>
+              <p id="mapSubtitle">—</p>
+            </div>
+            <div class="map-actions">
+              <button id="zoomOut" type="button" aria-label="Уменьшить">−</button>
+              <button id="zoomReset" type="button">100%</button>
+              <button id="zoomIn" type="button" aria-label="Увеличить">+</button>
+            </div>
+          </div>
+
+          <div class="map-stage" id="mapStage">
+            <svg id="mapSvg" viewBox="0 0 1000 620" role="img" aria-label="Схема уровня"></svg>
+          </div>
+
+          <div class="legend" id="mapLegend"></div>
+        </div>
+
+        <aside class="panel map-side">
+          <div class="map-progress">
+            <b id="mapPercent">0%</b>
+            <span id="mapCount">0 / 0 зон</span>
+          </div>
+          <div class="progress"><div class="progress-fill" id="mapProgress"></div></div>
+          <p class="map-about" id="mapAbout"></p>
+          <div class="room-list" id="mapRooms"></div>
+          <button class="danger full" id="mapReset" type="button">Сбросить отметки</button>
+          <div class="map-tips">
+            <h4>Советы</h4>
+            <ul id="mapTips"></ul>
+          </div>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>Outlast Trials Companion · fan-made, не аффилирован с Red Barrels</span>
+    <span>Данные: открытые гайды сообщества · <span id="year"></span></span>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="./js/data.js"></script>
+  <script src="./js/app.js"></script>
+</body>
+</html>
