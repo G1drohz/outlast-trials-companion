@@ -144,9 +144,9 @@ jobs:
             --notes-file RELEASE_NOTES.md \
             --latest || true
           gh release upload "v${VERSION}" \
-            artifacts/windows/*.exe \
-            artifacts/linux/*.AppImage \
-            artifacts/linux/*.deb \
-            artifacts/android/*.apk \
+            artifacts/windows-installer/*.exe \
+            artifacts/linux-packages/*.AppImage \
+            artifacts/linux-packages/*.deb \
+            artifacts/android-apk/*.apk \
             --repo "${{ github.repository }}" \
             --clobber
