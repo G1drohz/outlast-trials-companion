@@ -3,7 +3,10 @@
   "version": "1.1.0",
   "private": true,
   "description": "Outlast Trials Companion — справочник, таймер с чеклистом и интерактивные карты испытаний",
-  "author": "G1drohz",
+  "author": {
+    "name": "G1drohz",
+    "email": "186801004+G1drohz@users.noreply.github.com"
+  },
   "license": "MIT",
   "main": "main.js",
   "scripts": {
