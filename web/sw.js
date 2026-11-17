@@ -1,5 +1,5 @@
 /* Outlast Trials Companion — offline cache */
-const CACHE = 'otc-static-v1';
+const CACHE = 'otc-static-v1.1.0';
 const ASSETS = [
   './',
   './index.html',

@@ -39,6 +39,8 @@
   const TYPE_LABEL = {
     spawn: 'старт',
     objective: 'цель',
+    key: 'ключ',
+    terminal: 'терминал',
     loot: 'лут',
     secret: 'секрет',
     danger: 'опасно',
@@ -127,9 +129,11 @@
   function miniMap(map) {
     let html = '<svg viewBox="0 0 1000 620" preserveAspectRatio="xMidYMid meet" aria-hidden="true">';
     const palette = {
-      spawn: ['#10251a', '#2c6b45'],
-      objective: ['#241313', '#6b3a3a'],
-      loot: ['#201a0d', '#5c4a1c'],
+      spawn: ['#10251a', '#3f9d6b'],
+      objective: ['#2b1414', '#b54848'],
+      key: ['#362810', '#d99b2b'],
+      terminal: ['#10222e', '#3f86b5'],
+      loot: ['#241d0e', '#8a742c'],
       secret: ['#1a1124', '#4c2f66'],
       danger: ['#241710', '#71351f'],
       exit: ['#0e1e29', '#28506b'],
@@ -574,21 +578,34 @@
       const ca = center(a);
       const cb = center(b);
       const active = state.visited.has(a.id) && state.visited.has(b.id);
-      html += '<line class="map-link' + (active ? ' is-visited' : '') + '" x1="' + ca[0] + '" y1="' + ca[1] + '" x2="' + cb[0] + '" y2="' + cb[1] + '"/>';
+      const elbow = Math.abs(cb[0] - ca[0]) > Math.abs(cb[1] - ca[1])
+        ? 'M' + ca[0] + ' ' + ca[1] + ' H' + cb[0] + ' V' + cb[1]
+        : 'M' + ca[0] + ' ' + ca[1] + ' V' + cb[1] + ' H' + cb[0];
+      html += '<path class="map-link' + (active ? ' is-visited' : '') + '" d="' + elbow + '"/>';
     });
     map.rooms.forEach(r => {
       const visited = state.visited.has(r.id);
       const noteLines = r.note && r.id !== 'corridor' ? wrapNote(r.note, 30) : [];
+      const px = r.x + r.w - 26;
+      const py = r.y + 24;
+      let pin = '';
+      if (r.type === 'key') pin = '<path class="map-pin key" d="M' + px + ' ' + (py - 9) + ' L' + (px + 9) + ' ' + py + ' L' + px + ' ' + (py + 9) + ' L' + (px - 9) + ' ' + py + ' Z"/>';
+      else if (r.type === 'terminal') pin = '<circle class="map-pin terminal" cx="' + px + '" cy="' + py + '" r="9"/>';
+      else if (r.type === 'exit') pin = '<path class="map-pin exit" d="M' + (px - 9) + ' ' + py + ' h14 m-5 -5 l5 5 l-5 5"/>';
+      else if (r.type === 'spawn') pin = '<circle class="map-pin spawn" cx="' + px + '" cy="' + py + '" r="7"/>';
+      else if (r.type === 'danger') pin = '<path class="map-pin danger" d="M' + px + ' ' + (py - 9) + ' L' + (px + 9) + ' ' + (py + 7) + ' L' + (px - 9) + ' ' + (py + 7) + ' Z"/>';
+      else if (r.type === 'objective') pin = '<path class="map-pin objective" d="M' + (px - 8) + ' ' + py + ' h16 m-8 -8 v16"/>';
       html += '<g class="map-room' + (visited ? ' is-visited' : '') + '" data-room="' + r.id + '" data-type="' + r.type + '" tabindex="0" role="button" aria-label="' + escapeHtml(r.label + ' — ' + r.note) + '" aria-pressed="' + visited + '">' +
         '<title>' + escapeHtml(r.label + ' — ' + (TYPE_LABEL[r.type] || r.type) + '. ' + (r.note || '')) + '</title>' +
-        '<rect x="' + r.x + '" y="' + r.y + '" width="' + r.w + '" height="' + r.h + '" rx="2"/>' +
+        '<rect x="' + r.x + '" y="' + r.y + '" width="' + r.w + '" height="' + r.h + '" rx="7"/>' +
+        pin +
         '<text x="' + (r.x + 14) + '" y="' + (r.y + 28) + '">' + escapeHtml(r.label) + '</text>';
       noteLines.forEach((line, i) => {
         html += '<text class="room-note" x="' + (r.x + 14) + '" y="' + (r.y + 48 + i * 14) + '">' + escapeHtml(line) + '</text>';
       });
       html += '<text class="room-type-label" x="' + (r.x + 14) + '" y="' + (r.y + r.h - 12) + '">' + (TYPE_LABEL[r.type] || r.type) + '</text>';
       if (visited) {
-        html += '<text class="room-check" x="' + (r.x + r.w - 26) + '" y="' + (r.y + 28) + '">✓</text>';
+        html += '<text class="room-check" x="' + (r.x + r.w - 26) + '" y="' + (r.y + r.h - 16) + '">✓</text>';
       }
       html += '</g>';
     });
@@ -623,7 +640,7 @@
     svg.style.width = (state.zoom * 100) + '%';
     $('#zoomReset').textContent = Math.round(state.zoom * 100) + '%';
     renderMapSidebar(map);
-    $('#mapLegend').innerHTML = ['spawn', 'objective', 'loot', 'secret', 'danger', 'exit', 'corridor']
+    $('#mapLegend').innerHTML = ['spawn', 'objective', 'key', 'terminal', 'loot', 'secret', 'danger', 'exit', 'corridor']
       .map(type => '<span><i class="' + type + '"></i>' + (TYPE_LABEL[type] || type) + '</span>').join('') +
       '<span><i class="visited"></i>пройдено</span>';
   }
@@ -642,7 +659,7 @@
       if (done && !check) {
         const rect = roomEl.querySelector('rect');
         const x = Number(rect.getAttribute('x')) + Number(rect.getAttribute('width')) - 26;
-        const y = Number(rect.getAttribute('y')) + 28;
+        const y = Number(rect.getAttribute('y')) + Number(rect.getAttribute('height')) - 16;
         const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
         text.setAttribute('class', 'room-check');
         text.setAttribute('x', x);

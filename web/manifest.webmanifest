@@ -1,7 +1,7 @@
 {
   "name": "Outlast Trials Companion",
   "short_name": "OT Companion",
-  "description": "Справочник, таймер с чеклистом и интерактивные карты для The Outlast Trials.",
+  "description": "Справочник, таймер с чеклистом и подробные карты с легендой ключей для The Outlast Trials.",
   "lang": "ru",
   "dir": "ltr",
   "start_url": "./#reference",

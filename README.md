@@ -2,7 +2,7 @@
 
 Неофициальный компаньон для **The Outlast Trials**: справочник по локациям, предметам и врагам, таймер испытания с чеклистом задач и интерактивные схемы уровней с отметками пройденного.
 
-Работает **на ПК (Windows)**, **на Android** и **в браузере** как PWA. Все данные и прогресс хранятся локально на устройстве — интернет после установки не нужен.
+Работает **на ПК (Windows и Linux)**, **на Android** и **в браузере** как PWA. Все данные и прогресс хранятся локально на устройстве — интернет после установки не нужен.
 
 > Fan-made проект. Не аффилирован с Red Barrels. Схемы карт — авторские упрощённые планы для навигации, а не копии игровых карт.
 
@@ -10,9 +10,11 @@
 
 | Платформа | Файл | Что делает |
 |---|---|---|
-| **Windows** | `OutlastTrialsCompanion-Setup-1.0.0.exe` | Установщик: ставит приложение, создаёт ярлыки на рабочем столе и в меню «Пуск», добавляет деинсталлятор. Ничего дополнительно устанавливать не нужно — Electron и все библиотеки уже внутри. |
-| **Windows** | `OutlastTrialsCompanion-Portable-1.0.0.exe` | Портативная версия без установки. |
-| **Android** | `OutlastTrialsCompanion-1.0.0.apk` | Готовый APK (Android 7+). Всё внутри, никаких зависимостей. |
+| **Windows** | `OutlastTrialsCompanion-Setup-1.1.0.exe` | Установщик: ставит приложение, создаёт ярлыки на рабочем столе и в меню «Пуск», добавляет деинсталлятор. |
+| **Windows** | `OutlastTrialsCompanion-Portable-1.1.0.exe` | Портативная версия без установки. |
+| **Linux (x86_64)** | `OutlastTrialsCompanion-1.1.0-x86_64.AppImage` | Универсальный запускаемый файл: `chmod +x` и запуск двойным кликом. Зависимости (Electron) внутри. |
+| **Linux (Debian/Ubuntu)** | `OutlastTrialsCompanion-1.1.0-amd64.deb` | Пакет для установки через `sudo apt install ./...deb`. |
+| **Android** | `OutlastTrialsCompanion-1.1.0.apk` | Готовый APK (Android 7+). Всё внутри, никаких зависимостей. |
 | **Любая** | [GitHub Pages](https://g1drohz.github.io/outlast-trials-companion/) | Веб-версия. Можно установить как PWA: в Chrome — «Установить приложение». |
 
 Все установщики лежат в [Releases](https://github.com/G1drohz/outlast-trials-companion/releases/latest). Они собираются автоматически в GitHub Actions из этого репозитория.
@@ -37,8 +39,9 @@
 - `Пробел` — старт/пауза.
 
 ### Интерактивные карты
-- Схемы всех 14 локаций.
-- Цветовая маркировка зон: старт, цель, лут, секрет, опасно, выход.
+- Подробные схемы всех 14 локаций с реальными названиями площадок.
+- Полная легенда: старт, цель, **ключ / ключ-карта**, терминал, лут, секрет, опасность, выход, проход, пройденное.
+- Отдельные маркеры ключей и терминалов прямо на схеме — сразу видно, где искать.
 - Клик по зоне (или по списку справа) отмечает её пройденной.
 - Процент исследования и сохранение прогресса.
 - Зум схемы.
@@ -48,9 +51,9 @@
 - Чистый HTML/CSS/JS без фреймворков — быстро и без зависимостей в рантайме.
 - `localStorage` для прогресса, чеклистов и рекордов.
 - Service Worker + Web App Manifest для офлайн-режима и установки как PWA.
-- **Electron + electron-builder** → Windows `.exe` (NSIS installer + portable).
+- **Electron + electron-builder** → Windows `.exe` (NSIS installer + portable), Linux `.AppImage` и `.deb`.
 - **Capacitor** → Android `.apk`.
-- **GitHub Actions** → автоматическая сборка APK и EXE, публикация в Releases и деплой веб-версии на GitHub Pages.
+- **GitHub Actions** → автоматическая сборка EXE, Linux-пакетов и APK, публикация в Releases и деплой веб-версии на GitHub Pages.
 
 ## Структура
 
@@ -93,10 +96,21 @@ npm run build:win
 ```
 
 Готовые файлы появятся в `release/`:
-- `OutlastTrialsCompanion-Setup-1.0.0.exe`
-- `OutlastTrialsCompanion-Portable-1.0.0.exe`
+- `OutlastTrialsCompanion-Setup-1.1.0.exe`
+- `OutlastTrialsCompanion-Portable-1.1.0.exe`
 
-Сборка EXE на Linux теоретически возможна через Wine, но надёжнее — Windows-раннер GitHub Actions (так и делается в репозитории).
+### Linux (AppImage + DEB)
+
+```bash
+npm install
+npm run build:linux
+```
+
+В `release/` появятся:
+- `OutlastTrialsCompanion-1.1.0-x86_64.AppImage`
+- `OutlastTrialsCompanion-1.1.0-amd64.deb`
+
+AppImage достаточно сделать исполняемым: `chmod +x OutlastTrialsCompanion-1.1.0-x86_64.AppImage`. Для `.deb`: `sudo apt install ./OutlastTrialsCompanion-1.1.0-amd64.deb`. Сборка на Windows для Linux возможна через `npm run build:linux`, но надёжнее использовать Ubuntu-раннер GitHub Actions (как в этом репозитории).
 
 ### Android (.apk)
 
@@ -117,8 +131,9 @@ APK: `android/app/build/outputs/apk/debug/app-debug.apk`.
 Workflow `.github/workflows/build-release.yml` запускается на каждый push в `main` и вручную через **Actions → Build installers → Run workflow**:
 
 1. Windows-раннер собирает NSIS-установщик и portable `.exe`.
-2. Ubuntu-раннер собирает debug APK.
-3. Release-job создаёт релиз `v1.0.0` и прикрепляет к нему оба файла.
+2. Ubuntu-раннер собирает `.AppImage` и `.deb`.
+3. Ubuntu-раннер собирает debug APK.
+4. Release-job создаёт релиз `v1.1.0` и прикрепляет к нему все файлы.
 
 Workflow `.github/workflows/pages.yml` деплоит `web/` на GitHub Pages.
 

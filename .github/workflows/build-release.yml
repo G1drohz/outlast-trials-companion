@@ -39,6 +39,34 @@ jobs:
           path: release/*.exe
           if-no-files-found: error
 
+  linux:
+    name: Linux AppImage + DEB
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Generate icons
+        run: npm run icons
+
+      - name: Build AppImage and DEB packages
+        run: npx electron-builder --linux AppImage deb --x64 --publish never
+
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-packages
+          path: |
+            release/*.AppImage
+            release/*.deb
+          if-no-files-found: error
+
   android:
     name: Android APK
     runs-on: ubuntu-latest
@@ -80,8 +108,9 @@ jobs:
 
       - name: Rename APK
         run: |
+          VERSION=$(node -p "require('./package.json').version")
           mkdir -p artifacts
-          cp android/app/build/outputs/apk/debug/app-debug.apk artifacts/OutlastTrialsCompanion-1.0.0.apk
+          cp android/app/build/outputs/apk/debug/app-debug.apk "artifacts/OutlastTrialsCompanion-${VERSION}.apk"
           ls -lh artifacts
 
       - name: Upload Android artifact
@@ -94,34 +123,30 @@ jobs:
   release:
     name: Publish release
     runs-on: ubuntu-latest
-    needs: [windows, android]
+    needs: [windows, linux, android]
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download Windows artifacts
+      - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: windows-installer
-          path: artifacts/windows
-
-      - name: Download Android artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: android-apk
-          path: artifacts/android
+          path: artifacts
 
       - name: Create or update release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          ls -lh artifacts/windows artifacts/android
-          gh release create v1.0.0 \
+          VERSION=$(node -p "require('./package.json').version")
+          find artifacts -type f -printf '%p %k KB\n'
+          gh release create "v${VERSION}" \
             --repo "${{ github.repository }}" \
-            --title "Outlast Trials Companion v1.0.0" \
+            --title "Outlast Trials Companion v${VERSION}" \
             --notes-file RELEASE_NOTES.md \
             --latest || true
-          gh release upload v1.0.0 \
+          gh release upload "v${VERSION}" \
             artifacts/windows/*.exe \
+            artifacts/linux/*.AppImage \
+            artifacts/linux/*.deb \
             artifacts/android/*.apk \
             --repo "${{ github.repository }}" \
             --clobber

@@ -1,5 +1,6 @@
 /* Outlast Trials Companion — данные справочника.
-   Схемы карт — авторские упрощённые планы для навигации, не копии игровых карт. */
+   Подробные авторские схемы: реальные названия площадок из открытых гайдов,
+   но не точные копии игровых карт. */
 
 const TRIAL_KINDS = {
   investigate: {
@@ -82,9 +83,15 @@ const TRIAL_KINDS = {
   }
 };
 
-const room = (id, label, x, y, w, h, type, note) => ({ id, label, x, y, w, h, type, note });
+/*
+   Подробные авторские схемы: реальные названия площадок из открытых гайдов,
+   но не точные копии игровых карт. Ключи и терминалы отмечены отдельно. */
 
-const CORRIDOR = room('corridor', 'Коридор', 40, 240, 920, 100, 'corridor', 'Связующая зона: держи двери закрытыми.');
+const zone = (id, label, x, y, w, h, type, note, en) => ({ id, label, x, y, w, h, type, note, en });
+const cell = (row, col, id, label, type, note, en) =>
+  zone(id, label, 30 + col * 240, 25 + row * 180, 210, 130, type, note, en);
+const chain = ids => ids.slice(1).map((id, i) => [ids[i], id]);
+const link = (a, b) => [a, b];
 
 const MAPS = [
   {
@@ -94,19 +101,30 @@ const MAPS = [
     prime: 'Leland Coyle',
     threat: 4,
     accent: '#4f8cff',
-    about: 'Длинные коридоры, камеры и кабинеты. Отличная карта, чтобы выучить петли вокруг дверей: Коула нельзя перегнать по прямой, но можно разорвать линию взгляда.',
-    hazards: ['Электрощиты на полу', 'Узкие камеры без второго выхода', 'Шумные двери и допросные'],
-    tips: ['Держи в уме двор как альтернативный маршрут', 'Сначала собери отмычки и батареи', 'Не беги по центральному коридору без причины'],
+    about: 'Стандартная программа Коула: патрульный отдел, камеры, допросные и морг. Главный маршрут — центральный коридор, но двор и технические проходы дают петли, чтобы разорвать линию взгляда.',
+    hazards: ['Узкие камеры без второго выхода', 'Электрошок Коула', 'Шумные двери и допросные'],
+    tips: ['Ключи для Kill the Snitch лежат на телах — каждый ключ подходит своему телевизору', 'Сначала собери отмычки и батареи в столовой и спортзале', 'Двор — альтернативный маршрут, если центральный коридор простреливается'],
     rooms: [
-      room('reception', 'Приёмная', 40, 40, 260, 150, 'spawn', 'Старт. Осмотри стойку и шкафы.'),
-      room('cells', 'Камеры', 370, 40, 260, 150, 'objective', 'Основная цель большинства испытаний.'),
-      room('interro', 'Допросная', 700, 40, 260, 150, 'objective', 'Шумные взаимодействия, рядом патруль.'),
-      CORRIDOR,
-      room('laundry', 'Прачечная', 40, 390, 260, 170, 'secret', 'Секретная комната за двумя кнопками.'),
-      room('archive', 'Архив', 370, 390, 260, 170, 'loot', 'Ящики, отмычки, документы.'),
-      room('garage', 'Гараж', 700, 390, 260, 170, 'exit', 'Выход. Часто охраняется.')
+      cell(0, 0, 'entrance', 'Вход в участок', 'spawn', 'Старт. Осмотри стойку и шкафы.', 'Station Entrance'),
+      cell(0, 1, 'patrol', 'Отдел патруля', 'objective', 'Основная цель большинства программ.', 'Patrol Department'),
+      cell(0, 2, 'security', 'Охрана', 'terminal', 'Мониторы и терминал слежения.', 'Security Room'),
+      cell(0, 3, 'gym', 'Спортзал', 'loot', 'Отмычки, батареи, укрытия за снарядами.', 'Gymnasium'),
+      cell(1, 0, 'cafeteria', 'Столовая', 'loot', 'Еда и медикаменты. Шумная техника.', 'Cafeteria'),
+      cell(1, 1, 'cells', 'Камеры', 'objective', 'Ключи и заключённые — часто именно здесь.', 'Jail Cells'),
+      cell(1, 2, 'dispatch', 'Диспетчерская', 'terminal', 'Рации и терминал вызова.', 'Dispatch'),
+      cell(1, 3, 'chief', 'Кабинет начальника', 'key', 'Ключи от камер и отдела улик.', "Police Chief's Office"),
+      cell(2, 0, 'alley', 'Задний двор', 'exit', 'Альтернативный выход и короткая петля.', 'Back Alley'),
+      cell(2, 1, 'showers', 'Душевая', 'danger', 'Скользкий пол, мало укрытий.', 'Showers'),
+      cell(2, 2, 'morgue', 'Морг', 'objective', 'Трупы с метками — источник ключей.', 'Morgue'),
+      cell(2, 3, 'doors', 'Выход участка', 'exit', 'Финальные ворота, часто охраняются.', 'Station Doors')
     ],
-    links: [['reception','corridor'],['cells','corridor'],['interro','corridor'],['laundry','corridor'],['archive','corridor'],['garage','corridor']],
+    links: [
+      ...chain(['entrance', 'patrol', 'security', 'gym']),
+      ...chain(['cafeteria', 'cells', 'dispatch', 'chief']),
+      ...chain(['alley', 'showers', 'morgue', 'doors']),
+      link('entrance', 'cafeteria'), link('patrol', 'cells'), link('security', 'dispatch'), link('gym', 'chief'),
+      link('cafeteria', 'alley'), link('cells', 'showers'), link('dispatch', 'morgue'), link('chief', 'doors')
+    ],
     trials: [
       { id: 'kill-snitch', name: 'Kill the Snitch', ru: 'Убить стукача', kind: 'rescue', min: 14 },
       { id: 'teach-cop', name: 'Teach the Police Officer', ru: 'Проучить полицейского', kind: 'hunt', min: 12 },
@@ -124,19 +142,30 @@ const MAPS = [
     prime: 'Mother Gooseberry',
     threat: 4,
     accent: '#ff5f8f',
-    about: 'Ярмарочные аттракционы, лабиринт «Корневого канала» и открытые площади. Мало укрытий на улице — планируй перебежки между павильонами.',
+    about: 'Два ангара — «Корневой канал» и «Замок иллюзий» — плюс открытый парк с аттракционами. Мало укрытий на улице: планируй перебежки между павильонами и кассами.',
     hazards: ['Взрывные утки', 'Открытые площади без укрытий', 'Узкие проходы аттракционов'],
-    tips: ['Используй павильоны как ориентиры', 'Не беги через открытую площадь', 'Проверяй тёмные комнаты за аттракционами'],
+    tips: ['Сердца для Grind the Bad Apples лежат в резервуарах закусочной', 'Билеты и ключи берутся в кассах и офисе Гусберри', 'Клапаны A–D разбросаны по трубным комнатам — проверяй обе стороны ангара'],
     rooms: [
-      room('gate', 'Вход', 40, 40, 260, 150, 'spawn', 'Стартовая площадь и кассы.'),
-      room('carousel', 'Карусель', 370, 40, 260, 150, 'objective', 'Открытая зона, легко потерять укрытие.'),
-      room('funhouse', 'Комната смеха', 700, 40, 260, 150, 'loot', 'Зеркала и тупики — осторожно.'),
-      CORRIDOR,
-      room('rootcanal', 'Корневой канал', 40, 390, 260, 170, 'secret', 'Тёмный аттракцион, тайник.'),
-      room('stage', 'Сцена', 370, 390, 260, 170, 'objective', 'Шумная цель, рядом патрули.'),
-      room('backexit', 'Служебный выход', 700, 390, 260, 170, 'exit', 'Выход через техническую зону.')
+      cell(0, 0, 'gate', 'Вход в Футтерленд', 'spawn', 'Стартовая площадь и кассы.', 'Futterland Entrance'),
+      cell(0, 1, 'carousel', 'Карусель', 'objective', 'Открытая зона, легко потерять укрытие.', 'Carousel'),
+      cell(0, 2, 'diner', 'Закусочная', 'key', 'Сердца в резервуарах; билеты на аттракционы.', 'Diner'),
+      cell(0, 3, 'fair', 'Аттракционы', 'objective', 'Игровые автоматы и лотереи.', 'Fair Games'),
+      cell(1, 0, 'castle', 'Замок иллюзий', 'secret', 'Зеркала, ложные стены и тупики.', 'Illusion Castle'),
+      cell(1, 1, 'rootcanal', 'Корневой канал', 'objective', 'Тёмный аттракцион, главная петля ангара.', 'The Root Canal'),
+      cell(1, 2, 'goose', 'Офис Гусберри', 'key', 'Ключи и билеты, рядом дрель.', "Mother Gooseberry's Office"),
+      cell(1, 3, 'maintenance', 'Технические комнаты', 'terminal', 'Клапаны A–D и модули питания.', 'Maintenance Rooms'),
+      cell(2, 0, 'barn', 'Амбар', 'loot', 'Припасы и укрытия за сеном.', 'Barn'),
+      cell(2, 1, 'pipes', 'Трубная', 'terminal', 'Клапаны и вентили второго ангара.', 'Pipe Room'),
+      cell(2, 2, 'space', 'Космическая станция', 'secret', 'Скрытая декорация с тайником.', 'Space Station'),
+      cell(2, 3, 'grinder', 'Мясорубка', 'exit', 'Финальный выход через ангар.', 'Grinder')
     ],
-    links: [['gate','corridor'],['carousel','corridor'],['funhouse','corridor'],['rootcanal','corridor'],['stage','corridor'],['backexit','corridor']],
+    links: [
+      ...chain(['gate', 'carousel', 'diner', 'fair']),
+      ...chain(['castle', 'rootcanal', 'goose', 'maintenance']),
+      ...chain(['barn', 'pipes', 'space', 'grinder']),
+      link('gate', 'castle'), link('carousel', 'rootcanal'), link('diner', 'goose'), link('fair', 'maintenance'),
+      link('castle', 'barn'), link('rootcanal', 'pipes'), link('goose', 'space'), link('maintenance', 'grinder')
+    ],
     trials: [
       { id: 'grind-apples', name: 'Grind the Bad Apples', ru: 'Перемолоть плохишей', kind: 'destroy', min: 15 },
       { id: 'win-truth', name: 'Win the Truth', ru: 'Узнать правду', kind: 'investigate', min: 14 },
@@ -155,19 +184,30 @@ const MAPS = [
     prime: 'Mother Gooseberry',
     threat: 4,
     accent: '#c084fc',
-    about: 'Тесные спальни, кухня и коридоры с множеством дверей. Один из лучших уровней для игры в прятки — но у Гусберри здесь особенно много маршрутов.',
-    hazards: ['Узкие коридоры', 'Кухня с шумной техникой', 'Комнаты с одним выходом'],
-    tips: ['Запоминай вторую дверь в каждой комнате', 'Кухня — хороший источник медикаментов', 'Не прячься в комнате, где только что шумел'],
+    about: 'Тесные спальни, кухня, часовня и кладбище. Один из лучших уровней для пряток — но у Гусберри здесь много маршрутов, а комнаты часто с одним выходом.',
+    hazards: ['Узкие коридоры', 'Кухня с шумной техникой', 'Тёмные часовня и кладбище'],
+    tips: ['Отбеливатель для Feed the Children: часовня, подвал, прачечная, бассейн', 'Ключи и канистры для Reunite the Family — подвал часовни, прачечная, кухня', 'Запоминай вторую дверь в каждой комнате — это спасёт от Гусберри'],
     rooms: [
-      room('lobby', 'Вестибюль', 40, 40, 260, 150, 'spawn', 'Старт, стойка регистрации.'),
-      room('dorms', 'Спальни', 370, 40, 260, 150, 'objective', 'Много кроватей и укрытий.'),
-      room('kitchen', 'Кухня', 700, 40, 260, 150, 'objective', 'Шумная техника, медикаменты.'),
-      CORRIDOR,
-      room('office', 'Кабинет', 40, 390, 260, 170, 'loot', 'Документы и ключи.'),
-      room('basement', 'Подвал', 370, 390, 260, 170, 'secret', 'Тайник, но один выход.'),
-      room('yard', 'Задний двор', 700, 390, 260, 170, 'exit', 'Выход через хозяйственную зону.')
+      cell(0, 0, 'entrance', 'Главный вход', 'spawn', 'Старт, парадная дверь.', 'Main Entrance'),
+      cell(0, 1, 'lobby', 'Лобби и ресепшен', 'objective', 'Стойка, ключи, первые цели.', 'Lobby & Front Desk'),
+      cell(0, 2, 'faith', 'Радио «Вера»', 'terminal', 'Частотные коробки и вещание.', 'Faith Broadcast'),
+      cell(0, 3, 'infants', 'Ясли', 'objective', 'Кровати и укрытия.', 'Infants Dorms'),
+      cell(1, 0, 'girls', 'Спальни девочек', 'objective', 'Дети и предметы испытаний.', 'Girls Dorms'),
+      cell(1, 1, 'boys', 'Спальни мальчиков', 'objective', 'Второй корпус спален.', 'Boys Dorms'),
+      cell(1, 2, 'classes', 'Классы и кино', 'objective', 'Улики и звук проектора.', 'Classrooms & Film Room'),
+      cell(1, 3, 'chapel', 'Часовня', 'key', 'Отбеливатель, канистры, ключи.', 'Chapel'),
+      cell(2, 0, 'kitchen', 'Кухня и столовая', 'key', 'Отбеливатель и ключи, шумная техника.', 'Cafeteria & Kitchen'),
+      cell(2, 1, 'basement', 'Подвал часовни', 'secret', 'Тайник с ключами, один выход.', 'Chapel Basement'),
+      cell(2, 2, 'laundry', 'Прачечная', 'terminal', 'Ключи и частотные коробки.', 'Laundry'),
+      cell(2, 3, 'back', 'Задний вход', 'exit', 'Выход через хозяйственную зону.', 'Back Entrance')
     ],
-    links: [['lobby','corridor'],['dorms','corridor'],['kitchen','corridor'],['office','corridor'],['basement','corridor'],['yard','corridor']],
+    links: [
+      ...chain(['entrance', 'lobby', 'faith', 'infants']),
+      ...chain(['girls', 'boys', 'classes', 'chapel']),
+      ...chain(['kitchen', 'basement', 'laundry', 'back']),
+      link('entrance', 'girls'), link('lobby', 'boys'), link('faith', 'classes'), link('infants', 'chapel'),
+      link('girls', 'kitchen'), link('boys', 'basement'), link('classes', 'laundry'), link('chapel', 'back')
+    ],
     trials: [
       { id: 'cleanse-orphans', name: 'Cleanse the Orphans', ru: 'Очистить сирот', kind: 'hunt', min: 15 },
       { id: 'feed-children', name: 'Feed the Children', ru: 'Накормить детей', kind: 'rescue', min: 14 },
@@ -184,19 +224,30 @@ const MAPS = [
     prime: 'Leland Coyle',
     threat: 4,
     accent: '#f59e0b',
-    about: 'Залы суда, камеры и архив. Много закрытых проходов: запоминай, какие двери уже открыты, иначе финальный побег превратится в блуждание.',
-    hazards: ['Позднее усиление патрулей', 'Закрытые служебные проходы', 'Открытые залы без укрытий'],
-    tips: ['Отмечай открытые двери', 'Не задерживайся в зале суда', 'Оставь заряд рига на финальный рывок'],
+    about: 'Холл, залы суда, комната присяжных и хранилище улик. Много закрытых проходов: запоминай открытые двери, иначе финальный побег превратится в блуждание.',
+    hazards: ['Позднее усиление патрулей', 'Закрытые служебные проходы', 'Открытый зал без укрытий'],
+    tips: ['Ведро с кислотой и улики — библиотека, хранилище A–F или кабинеты, зависит от программы', 'Пазл-бокс в комнате присяжных — ключевой туториал', 'Waiting Room: микроволновый триггер и трекер для Scapegoats'],
     rooms: [
-      room('hall', 'Холл', 40, 40, 260, 150, 'spawn', 'Старт, мраморный холл.'),
-      room('courtroom', 'Зал суда', 370, 40, 260, 150, 'objective', 'Открытое пространство, мало укрытий.'),
-      room('records', 'Архив', 700, 40, 260, 150, 'objective', 'Стеллажи и документы.'),
-      CORRIDOR,
-      room('holding', 'Камеры', 40, 390, 260, 170, 'loot', 'Ключи и улики.'),
-      room('service', 'Сервисный коридор', 370, 390, 260, 170, 'danger', 'Узкий проход, плохой для погони.'),
-      room('gate', 'Выход', 700, 390, 260, 170, 'exit', 'Финальные ворота.')
+      cell(0, 0, 'entrance', 'Главный вход', 'spawn', 'Старт, мраморный холл.', 'Front Entrance'),
+      cell(0, 1, 'lobby', 'Холл', 'objective', 'Блокировщики рига, ведро с кислотой.', 'Lobby'),
+      cell(0, 2, 'library', 'Библиотека', 'objective', 'Стеллажи и документы.', 'Library'),
+      cell(0, 3, 'courtroom', 'Зал суда', 'objective', 'Открытое пространство, мало укрытий.', 'Main Courtroom'),
+      cell(1, 0, 'accused', 'Скамья подсудимых', 'objective', 'Центр зала, много света.', 'Accused Stand'),
+      cell(1, 1, 'jury', 'Комната присяжных', 'key', 'Пазл-бокс и ключ.', 'Jury Room'),
+      cell(1, 2, 'evidence', 'Хранилище улик', 'key', 'Улики A–F, кислота.', 'Evidence Storage'),
+      cell(1, 3, 'offices', 'Кабинеты', 'terminal', 'Служебные терминалы и двери.', 'Office Wing'),
+      cell(2, 0, 'waiting', 'Зал ожидания', 'terminal', 'Триггер и трекер.', 'Waiting Room'),
+      cell(2, 1, 'backstage', 'За кулисами', 'objective', 'Электрощиты, Scapegoats.', 'Backstage'),
+      cell(2, 2, 'jail', 'Тюремный блок', 'danger', 'Камеры с одним выходом.', 'Jail'),
+      cell(2, 3, 'back', 'Задний выход', 'exit', 'Финальные ворота.', 'Back Entrance')
     ],
-    links: [['hall','corridor'],['courtroom','corridor'],['records','corridor'],['holding','corridor'],['service','corridor'],['gate','corridor']],
+    links: [
+      ...chain(['entrance', 'lobby', 'library', 'courtroom']),
+      ...chain(['accused', 'jury', 'evidence', 'offices']),
+      ...chain(['waiting', 'backstage', 'jail', 'back']),
+      link('entrance', 'accused'), link('lobby', 'jury'), link('library', 'evidence'), link('courtroom', 'offices'),
+      link('accused', 'waiting'), link('jury', 'backstage'), link('evidence', 'jail'), link('offices', 'back')
+    ],
     trials: [
       { id: 'bribe-judges', name: 'Bribe the Judges', ru: 'Подкупить судей', kind: 'steal', min: 13 },
       { id: 'vindicate-guilty', name: 'Vindicate the Guilty', ru: 'Оправдать виновных', kind: 'investigate', min: 14 },
@@ -214,19 +265,30 @@ const MAPS = [
     prime: 'Mother Gooseberry',
     threat: 4,
     accent: '#f472b6',
-    about: 'Конвейеры, печи и склад игрушек. Механизмы глушат шаги, но конвейер может выдать тебя шумом. Держи путь отхода до того, как потянешь рычаг.',
-    hazards: ['Шумные конвейеры', 'Печи и горячие зоны', 'Тесные проходы между станками'],
-    tips: ['Оглушай станки перед взаимодействием', 'Склад — хороший источник припасов', 'Не стой у конвейера после запуска'],
+    about: 'Три линии производства, пульты управления, подвал и два погрузочных дока. Механизмы глушат шаги, но конвейер выдаёт тебя шумом — планируй путь отхода до рычага.',
+    hazards: ['Шумные конвейеры', 'Печь и горячие зоны', 'Тесные проходы между станками'],
+    tips: ['Главный ключ — в подвале; ключи B и C рандомны по пультам и офисам', 'Flatten the Foreman: 4 электронных замка и ключ секции C в кабинете бригадира', 'Клапаны для Fumigate — подвал и оба погрузочных дока'],
     rooms: [
-      room('floor', 'Цех', 40, 40, 260, 150, 'spawn', 'Старт у главного конвейера.'),
-      room('line', 'Конвейер', 370, 40, 260, 150, 'objective', 'Шумная цель, много патрулей.'),
-      room('storage', 'Склад игрушек', 700, 40, 260, 150, 'loot', 'Ящики и припасы.'),
-      CORRIDOR,
-      room('furnace', 'Печь', 40, 390, 260, 170, 'objective', 'Жар и опасные механизмы.'),
-      room('vents', 'Вентиляция', 370, 390, 260, 170, 'secret', 'Тайный проход между цехами.'),
-      room('loading', 'Погрузка', 700, 390, 260, 170, 'exit', 'Выход через доки.')
+      cell(0, 0, 'entrance', 'Главный вход', 'spawn', 'Старт у главной двери.', 'Main Entrance'),
+      cell(0, 1, 'basement', 'Подвал', 'key', 'Ключ от главной двери, клапаны.', 'Basement'),
+      cell(0, 2, 'linea', 'Линия A', 'objective', 'Первый конвейер.', 'Production Line A'),
+      cell(0, 3, 'controla', 'Пульт A', 'terminal', 'Выключатель секции A.', 'Control Room A'),
+      cell(1, 0, 'storage', 'Склад', 'loot', 'Ящики и припасы.', 'Storage Room'),
+      cell(1, 1, 'lineb', 'Линия B', 'objective', 'Сборка кукол, шумно.', 'Production Line B'),
+      cell(1, 2, 'controlb', 'Пульт B', 'terminal', 'Ключ B (рандом), выключатель.', 'Control Room B'),
+      cell(1, 3, 'foreman', 'Кабинет бригадира', 'key', 'Ключ секции C.', "Foreman's Office"),
+      cell(2, 0, 'linec', 'Линия C', 'objective', 'Третий конвейер.', 'Production Line C'),
+      cell(2, 1, 'incinerator', 'Печь', 'danger', 'Жар, огонь и механизмы.', 'Incinerator'),
+      cell(2, 2, 'westdock', 'Западный док', 'terminal', 'Клапаны и модули.', 'West Shipping Dock'),
+      cell(2, 3, 'eastdock', 'Восточный док', 'exit', 'Выход через доки.', 'East Shipping Dock')
     ],
-    links: [['floor','corridor'],['line','corridor'],['storage','corridor'],['furnace','corridor'],['vents','corridor'],['loading','corridor']],
+    links: [
+      ...chain(['entrance', 'basement', 'linea', 'controla']),
+      ...chain(['storage', 'lineb', 'controlb', 'foreman']),
+      ...chain(['linec', 'incinerator', 'westdock', 'eastdock']),
+      link('entrance', 'storage'), link('basement', 'lineb'), link('linea', 'controlb'), link('controla', 'foreman'),
+      link('storage', 'linec'), link('lineb', 'incinerator'), link('controlb', 'westdock'), link('foreman', 'eastdock')
+    ],
     trials: [
       { id: 'flatten-foreman', name: 'Flatten the Foreman', ru: 'Раздавить бригадира', kind: 'hunt', min: 14 },
       { id: 'sanitize-factory', name: 'Sanitize the Factory', ru: 'Санитарная обработка', kind: 'sabotage', min: 15 },
@@ -244,19 +306,30 @@ const MAPS = [
     prime: 'Franco Barbi',
     threat: 4,
     accent: '#22d3ee',
-    about: 'Склады, контейнеры и причал. Франко простреливает длинные прямые, поэтому передвигайся между укрытиями и не выходи на открытый пирс без плана.',
-    hazards: ['Растяжки и мины', 'Простреливаемые прямые', 'Скользкие края причала'],
-    tips: ['Сбивай растяжки кирпичом', 'Не выглядывай из-за контейнера дважды', 'Лодка — финальная точка эвакуации'],
+    about: 'Гавань, лаборатория Chem-Co, ж/д депо, казино и судно «Анджелина». Франко простреливает длинные прямые — двигайся между контейнерами и не выходи на пирс без плана.',
+    hazards: ['Растяжки и мины', 'Простреливаемые прямые', 'Пилы в трюме судна'],
+    tips: ['Кнопка крана — в диспетчерской; яд и канистры — в Chem-Co', 'Empty the Vault: три проекции для сейфа казино', 'Бочки и информатор спавнятся рандомно — проверяй склад и депо'],
     rooms: [
-      room('pier', 'Причал', 40, 40, 260, 150, 'spawn', 'Старт у воды.'),
-      room('warehouse', 'Склад', 370, 40, 260, 150, 'objective', 'Контейнеры и ящики.'),
-      room('vault', 'Хранилище', 700, 40, 260, 150, 'secret', 'Тайник за кодовым замком.'),
-      CORRIDOR,
-      room('customs', 'Таможня', 40, 390, 260, 170, 'objective', 'Документы и терминалы.'),
-      room('containers', 'Контейнеры', 370, 390, 260, 170, 'loot', 'Лабиринт из контейнеров.'),
-      room('boat', 'Катер', 700, 390, 260, 170, 'exit', 'Выход по воде.')
+      cell(0, 0, 'harbor', 'Вход в гавань', 'spawn', 'Старт у воды.', 'Harbor Entrance'),
+      cell(0, 1, 'control', 'Диспетчерская', 'terminal', 'Кнопка крана и терминалы.', 'Control Room'),
+      cell(0, 2, 'lab', 'Лаборатория Chem-Co', 'objective', 'Варочный котел и яд.', 'Chem-Co Laboratory'),
+      cell(0, 3, 'train', 'Ж/д депо', 'objective', 'Пазл-боксы, символ Eye.', 'Train Depot'),
+      cell(1, 0, 'crane', 'Крановый залив', 'loot', 'Укрытия за контейнерами.', 'Crane Bay'),
+      cell(1, 1, 'cooker', 'Варочная зона', 'danger', 'Горячие поверхности и газ.', 'Cooker Area'),
+      cell(1, 2, 'platform', 'Платформа', 'objective', 'Вагоны и проекции.', 'Train Platform'),
+      cell(1, 3, 'hold', 'Трюм «Анджелины»', 'danger', 'Пилы и Myules.', 'Cargo Hold'),
+      cell(2, 0, 'casino', 'Казино', 'loot', 'Стоки и припасы.', 'Casino'),
+      cell(2, 1, 'vault', 'Хранилище казино', 'key', 'Три проекции для сейфа.', 'Casino Vault'),
+      cell(2, 2, 'boat', 'Катер', 'exit', 'Эвакуация по воде.', 'The Angelina'),
+      cell(2, 3, 'pier', 'Причал', 'exit', 'Длинный простреливаемый пирс.', 'Pier')
     ],
-    links: [['pier','corridor'],['warehouse','corridor'],['vault','corridor'],['customs','corridor'],['containers','corridor'],['boat','corridor']],
+    links: [
+      ...chain(['harbor', 'control', 'lab', 'train']),
+      ...chain(['crane', 'cooker', 'platform', 'hold']),
+      ...chain(['casino', 'vault', 'boat', 'pier']),
+      link('harbor', 'crane'), link('control', 'cooker'), link('lab', 'platform'), link('train', 'hold'),
+      link('crane', 'casino'), link('cooker', 'vault'), link('platform', 'boat'), link('hold', 'pier')
+    ],
     trials: [
       { id: 'poison-medicine', name: 'Poison the Medicine', ru: 'Отравить лекарства', kind: 'sabotage', min: 14 },
       { id: 'poison-cattle', name: 'Poison the Cattle', ru: 'Отравить скот', kind: 'sabotage', min: 13 },
@@ -272,19 +345,30 @@ const MAPS = [
     prime: 'Franco Barbi',
     threat: 5,
     accent: '#fb7185',
-    about: 'Улицы, аукционный зал и ратуша. Комбинирует открытые перестрелочные улицы с тесными интерьерами — держи в голове два разных маршрута.',
-    hazards: ['Снайперские прямые Франко', 'Много открытых улиц', 'Шумные городские объекты'],
-    tips: ['Двигайся по переулкам', 'Аукционный зал — самая шумная точка', 'Не используй метро как укрытие без проверки'],
+    about: 'Улицы, театры, метро и канализация. Два разных маршрута: открытые перестрелочные улицы и подземные проходы под ними. Держи в голове оба.',
+    hazards: ['Снайперские прямые Франко', 'Открытые улицы', 'Проливы в канализации'],
+    tips: ['Ключ от кинотеатра с символом Eye добывают Microwave Triggerом', 'Тихий аукцион и секретки — аптека, закусочная, фотоавтомат', 'Канализация: Old Subway, Centrale, Electric Room, Bank Vault'],
     rooms: [
-      room('street', 'Улица', 40, 40, 260, 150, 'spawn', 'Старт на улице.'),
-      room('auction', 'Аукционный зал', 370, 40, 260, 150, 'objective', 'Главная цель, много шума.'),
-      room('bar', 'Бар', 700, 40, 260, 150, 'loot', 'Припасы и укрытия.'),
-      CORRIDOR,
-      room('alley', 'Переулок', 40, 390, 260, 170, 'danger', 'Узкий маршрут отхода.'),
-      room('cityhall', 'Ратуша', 370, 390, 260, 170, 'objective', 'Второй этап испытания.'),
-      room('metro', 'Метро', 700, 390, 260, 170, 'exit', 'Выход через подземку.')
+      cell(0, 0, 'subway', 'Метро, 5 линия', 'spawn', 'Старт на станции Theater.', 'Subway'),
+      cell(0, 1, 'plaza', 'Площадной театр', 'objective', 'Сцена и настройка шоу.', 'Plaza Theater'),
+      cell(0, 2, 'chinese', 'Китайский кинотеатр', 'key', 'Ключ с символом Eye.', 'Chinese Movie Theater'),
+      cell(0, 3, 'zahuo', 'Zahuo Dian / Blue Lagoon', 'objective', 'Capture Protocol за билет.', 'Zahuo Dian'),
+      cell(1, 0, 'pub', 'Ирландский паб', 'loot', 'Укрытия и припасы.', 'Irish Pub'),
+      cell(1, 1, 'herbal', 'Аптека Huay Xue', 'key', 'Секретная комната.', 'Huay Xue Herbal Store'),
+      cell(1, 2, 'snack', 'Закусочная', 'loot', 'Секретка и еда.', 'Do-Nut Hole Snack Bar'),
+      cell(1, 3, 'fire', 'Пожарная станция', 'terminal', 'Спуск в канализацию.', 'Fire Station'),
+      cell(2, 0, 'oldsubway', 'Старое метро', 'objective', 'Нижний уровень, станция Brigade.', 'Old Subway'),
+      cell(2, 1, 'centrale', 'Центральная', 'danger', 'Затопления и длинные залы.', 'Centrale'),
+      cell(2, 2, 'electric', 'Электрощитовая', 'terminal', 'Щиты и кабели.', 'Electric Room'),
+      cell(2, 3, 'bankvault', 'Банковский сейф', 'key', 'Проекции и ключ.', 'Bank Vault')
     ],
-    links: [['street','corridor'],['auction','corridor'],['bar','corridor'],['alley','corridor'],['cityhall','corridor'],['metro','corridor']],
+    links: [
+      ...chain(['subway', 'plaza', 'chinese', 'zahuo']),
+      ...chain(['pub', 'herbal', 'snack', 'fire']),
+      ...chain(['oldsubway', 'centrale', 'electric', 'bankvault']),
+      link('subway', 'pub'), link('plaza', 'herbal'), link('chinese', 'snack'), link('zahuo', 'fire'),
+      link('pub', 'oldsubway'), link('herbal', 'centrale'), link('snack', 'electric'), link('fire', 'bankvault')
+    ],
     trials: [
       { id: 'pleasure-prosecutor', name: 'Pleasure the Prosecutor', ru: 'Ублажить прокурора', kind: 'investigate', min: 14 },
       { id: 'kidnap-mistress', name: 'Kidnap the Mistress', ru: 'Похитить любовницу', kind: 'rescue', min: 15 },
@@ -299,19 +383,30 @@ const MAPS = [
     prime: 'Franco Barbi',
     threat: 4,
     accent: '#34d399',
-    about: 'Частные дома, школа и пустырь. Много входов в дома — используй их для петель, но помни: Франко слышит даже осторожное открытие двери.',
-    hazards: ['Растяжки в домах', 'Открытые газоны', 'Школьные коридоры с одним выходом'],
-    tips: ['Прыгай через заборы, чтобы срезать', 'Гараж — хороший тайник', 'Не беги по газону на виду'],
+    about: 'Свалка, ратуша, богатый район, трущобы и школа. Много входов в дома — используй их для петель, но помни: Франко слышит даже осторожное открытие двери.',
+    hazards: ['Растяжки в домах', 'Открытые газоны', 'Berserker в центре и убежище'],
+    tips: ['Генераторы и UV-символы для Disrupt the Neighborhood — в домах и школе', 'Ключи и частотные коробки — ратуша, убежище, ворота №2', 'Секретки: ванные в Rich District и Slum'],
     rooms: [
-      room('block', 'Квартал', 40, 40, 260, 150, 'spawn', 'Старт на улице.'),
-      room('house', 'Дом', 370, 40, 260, 150, 'objective', 'Двухэтажный дом с укрытиями.'),
-      room('garage', 'Гараж', 700, 40, 260, 150, 'loot', 'Инструменты и припасы.'),
-      CORRIDOR,
-      room('school', 'Школа', 40, 390, 260, 170, 'objective', 'Классы и длинные коридоры.'),
-      room('lot', 'Пустырь', 370, 390, 260, 170, 'secret', 'Тайник под открытым небом.'),
-      room('highway', 'Шоссе', 700, 390, 260, 170, 'exit', 'Выход через дорогу.')
+      cell(0, 0, 'scrapyard', 'Свалка', 'spawn', 'Старт на входе в район.', 'The Scrapyard'),
+      cell(0, 1, 'plaza', 'Площадь города', 'objective', 'Центр, часто патрулируется.', 'Town Center Plaza'),
+      cell(0, 2, 'hall', 'Ратуша', 'key', 'Переключатель ворот и микрофон.', 'Town Hall'),
+      cell(0, 3, 'rich', 'Богатый район', 'objective', 'Генераторы и UV-символы.', 'Rich District'),
+      cell(1, 0, 'shelter', 'Бомбоубежище', 'key', 'Частотные коробки.', 'Fallout Shelter'),
+      cell(1, 1, 'gate2', 'Ворота №2', 'terminal', 'Частотный замок.', 'Blocked Gate #2'),
+      cell(1, 2, 'slum', 'Трущобы', 'danger', 'Узкие дворы, ночные охотники.', 'Slum'),
+      cell(1, 3, 'plant', 'Мясокомбинат', 'loot', 'Припасы и укрытия.', 'Rare Horses Meat Plant'),
+      cell(2, 0, 'school', 'Школа', 'objective', 'Классы и столовая.', 'Central High School'),
+      cell(2, 1, 'auto', 'Авторемонт', 'loot', 'Инструменты и укрытия.', 'Auto Repair Shop'),
+      cell(2, 2, 'smoke', 'Коптильня', 'secret', 'Тайник и еда.', "Daller's Famous Smoked Meat"),
+      cell(2, 3, 'shuttle', 'Челнок', 'exit', 'Выход через площадку.', 'Shuttle')
     ],
-    links: [['block','corridor'],['house','corridor'],['garage','corridor'],['school','corridor'],['lot','corridor'],['highway','corridor']],
+    links: [
+      ...chain(['scrapyard', 'plaza', 'hall', 'rich']),
+      ...chain(['shelter', 'gate2', 'slum', 'plant']),
+      ...chain(['school', 'auto', 'smoke', 'shuttle']),
+      link('scrapyard', 'shelter'), link('plaza', 'gate2'), link('hall', 'slum'), link('rich', 'plant'),
+      link('shelter', 'school'), link('gate2', 'auto'), link('slum', 'smoke'), link('plant', 'shuttle')
+    ],
     trials: [
       { id: 'liquidate-union', name: 'Liquidate the Union', ru: 'Ликвидировать союз', kind: 'hunt', min: 15 },
       { id: 'get-out-vote', name: 'Get Out the Vote', ru: 'Поднять голоса', kind: 'investigate', min: 13 },
@@ -326,19 +421,30 @@ const MAPS = [
     prime: 'Kress Twins',
     threat: 5,
     accent: '#a3e635',
-    about: 'Атриум, магазины, кинотеатр и подземная парковка. Близнецы Кресс работают парой: если один гонит тебя, второй может ждать на выходе.',
-    hazards: ['Две погони одновременно', 'Эскалаторы и открытый атриум', 'Тёмная парковка'],
-    tips: ['Не позволяй загнать себя в магазин с одним выходом', 'Слушай два источника шагов', 'Парковка — хороший круг для разрыва дистанции'],
+    about: 'Главная площадь с фонтаном, магазины по буквам, универмаг Spatlin и погрузочные доки. Близнецы Кресс работают парой: если один гонит тебя, второй может ждать на выходе.',
+    hazards: ['Две погони одновременно', 'Открытый атриум', 'Тёмные служебные коридоры'],
+    tips: ['Предохранители: зоомагазин, салон, ресторан, Cathod TV, Frames and Records, оружейный', 'После взятия предохранителя магазин гаснет и выходит Grunt / Big Grunt', 'Фонтанная зона открывается через кассы Spatlin и универмага'],
     rooms: [
-      room('atrium', 'Атриум', 40, 40, 260, 150, 'spawn', 'Старт в центре ТЦ.'),
-      room('shops', 'Магазины', 370, 40, 260, 150, 'objective', 'Много полок и укрытий.'),
-      room('cinema', 'Кинотеатр', 700, 40, 260, 150, 'loot', 'Тёмные залы, припасы.'),
-      CORRIDOR,
-      room('stock', 'Склад', 40, 390, 260, 170, 'secret', 'Тайник за служебной дверью.'),
-      room('foodcourt', 'Фудкорт', 370, 390, 260, 170, 'objective', 'Открытая зона, шумно.'),
-      room('parking', 'Парковка', 700, 390, 260, 170, 'exit', 'Выход через подземный уровень.')
+      cell(0, 0, 'entrance', 'Главный вход', 'spawn', 'Старт в атриуме.', 'Main Entrance'),
+      cell(0, 1, 'pet', 'Зоомагазин', 'key', 'Предохранитель B.', 'Pet Store'),
+      cell(0, 2, 'beauty', 'Салон красоты', 'key', 'Предохранитель C.', 'Beauty Salon'),
+      cell(0, 3, 'italian', 'Итальянский ресторан', 'key', 'Предохранитель D.', 'Italian Restaurant'),
+      cell(1, 0, 'plaza', 'Главная площадь', 'objective', 'Фонтан и открытый атриум.', 'Main Plaza / Fountain Area'),
+      cell(1, 1, 'spatlin', 'Spatlin', 'objective', 'Аптека, кассы, склад.', 'Spatlin'),
+      cell(1, 2, 'department', 'Универмаг', 'objective', 'Предохранители и полки.', 'Department Store'),
+      cell(1, 3, 'gun', 'Оружейный магазин', 'loot', 'Предохранитель и укрытия.', 'Gun Store'),
+      cell(2, 0, 'service', 'Сервисная комната', 'secret', 'Тайник за служебной дверью.', 'Service Room'),
+      cell(2, 1, 'loading', 'Погрузочные доки', 'terminal', 'Старт MK, улики.', 'Loading Docks'),
+      cell(2, 2, 'surveillance', 'Видеонаблюдение', 'terminal', 'Мониторы и двери.', 'Surveillance Room'),
+      cell(2, 3, 'parking', 'Задний вход', 'exit', 'Парковка Spatlin.', 'Back Entrance / Spatlin Parking')
     ],
-    links: [['atrium','corridor'],['shops','corridor'],['cinema','corridor'],['stock','corridor'],['foodcourt','corridor'],['parking','corridor']],
+    links: [
+      ...chain(['entrance', 'pet', 'beauty', 'italian']),
+      ...chain(['plaza', 'spatlin', 'department', 'gun']),
+      ...chain(['service', 'loading', 'surveillance', 'parking']),
+      link('entrance', 'plaza'), link('pet', 'spatlin'), link('beauty', 'department'), link('italian', 'gun'),
+      link('plaza', 'service'), link('spatlin', 'loading'), link('department', 'surveillance'), link('gun', 'parking')
+    ],
     trials: [
       { id: 'kill-politician', name: 'Kill the Politician', ru: 'Убить политика', kind: 'hunt', min: 14 },
       { id: 'investigate-minotaur', name: 'Investigate the Minotaur', ru: 'Расследовать дело Минотавра', kind: 'investigate', min: 15 },
@@ -353,19 +459,30 @@ const MAPS = [
     prime: 'Liliya',
     threat: 5,
     accent: '#38bdf8',
-    about: 'Роскошный курорт с бассейном, СПА и банкетным залом. Новый Prime Asset Лилиия давит на открытых пространствах — держись ближе к номерам и служебным проходам.',
-    hazards: ['Открытые бассейны и пляж', 'Скользкие полы', 'Позднее усиление охраны'],
-    tips: ['Номера — лучшие укрытия', 'СПА даёт тайник, но один выход', 'Пляж не лучшее место для погони'],
+    about: 'Ледяная пещера, служебная зона, лобби, живой аукцион, восточный коридор и крипта. Лилиия давит на открытых пространствах — держись номеров и служебных проходов.',
+    hazards: ['Открытые пространства и скользкие полы', 'Позднее усиление охраны', 'Холод в номерах 201–204'],
+    tips: ['Owl Key — в Fine Arts, под blacklight в тихом аукционе', 'Рычаг PAIN IN PLEASURE в комнате медведя открывает неотмеченную зону', 'Крипта: самоцветы и Bear Key для Incinerate the Relic'],
     rooms: [
-      room('lobby', 'Лобби', 40, 40, 260, 150, 'spawn', 'Старт, ресепшен.'),
-      room('pool', 'Бассейн', 370, 40, 260, 150, 'objective', 'Открытая зона, мало укрытий.'),
-      room('rooms', 'Номера', 700, 40, 260, 150, 'loot', 'Кровати, шкафы, припасы.'),
-      CORRIDOR,
-      room('spa', 'СПА', 40, 390, 260, 170, 'secret', 'Тайник с припасами.'),
-      room('banquet', 'Банкетный зал', 370, 390, 260, 170, 'objective', 'Шумная цель, много мебели.'),
-      room('beach', 'Пляж', 700, 390, 260, 170, 'exit', 'Выход по берегу.')
+      cell(0, 0, 'cavern', 'Ледяная пещера', 'spawn', 'Стартовая зона.', 'Cavern'),
+      cell(0, 1, 'staff', 'Служебная зона', 'terminal', 'Печь, кухня, склад, док.', "Employees' Only Area"),
+      cell(0, 2, 'lobby', 'Лобби', 'objective', 'Ресепшен, бар, медведь.', 'Lobby'),
+      cell(0, 3, 'rooms201', 'Номера 201–204', 'objective', 'Холод, неисправный генератор.', 'Rooms 201–204'),
+      cell(1, 0, 'loading', 'Служебный док', 'loot', 'Припасы и короткий проход.', 'Loading Dock'),
+      cell(1, 1, 'auction', 'Живой аукцион', 'key', 'Депозитный ящик и лоты.', 'Live Auction'),
+      cell(1, 2, 'finearts', 'Fine Arts', 'key', 'Owl Key, тихий аукцион.', 'Fine Arts'),
+      cell(1, 3, 'east', 'Восточный коридор', 'terminal', 'Модули питания, столовая, часовня.', 'East Corridor'),
+      cell(2, 0, 'rooms205', 'Номера 205–207', 'loot', 'Кухня, прачечная, винный шкаф.', 'Rooms 205–207'),
+      cell(2, 1, 'chapel', 'Часовня', 'objective', 'Тихая зона восточного коридора.', 'Chapel'),
+      cell(2, 2, 'crypt', 'Крипта', 'secret', 'Самоцветы и Bear Key.', 'Crypt'),
+      cell(2, 3, 'unmapped', 'Неотмеченная зона', 'exit', 'Выход через потайной проход.', 'Unmapped Space')
     ],
-    links: [['lobby','corridor'],['pool','corridor'],['rooms','corridor'],['spa','corridor'],['banquet','corridor'],['beach','corridor']],
+    links: [
+      ...chain(['cavern', 'staff', 'lobby', 'rooms201']),
+      ...chain(['loading', 'auction', 'finearts', 'east']),
+      ...chain(['rooms205', 'chapel', 'crypt', 'unmapped']),
+      link('cavern', 'loading'), link('staff', 'auction'), link('lobby', 'finearts'), link('rooms201', 'east'),
+      link('loading', 'rooms205'), link('auction', 'chapel'), link('finearts', 'crypt'), link('east', 'unmapped')
+    ],
     trials: [
       { id: 'despoil-auction', name: 'Despoil the Auction', ru: 'Разграбить аукцион', kind: 'steal', min: 15 },
       { id: 'solve-murder', name: 'Solve the Murder', ru: 'Раскрыть убийство', kind: 'investigate', min: 16 },
@@ -379,19 +496,30 @@ const MAPS = [
     prime: 'Kress Twins',
     threat: 4,
     accent: '#e879f9',
-    about: 'Съёмочные павильоны, аппаратная и гримёрки. Декорации обманчивы: за фальшивыми стенами часто есть короткий проход.',
-    hazards: ['Ложные стены и тупики', 'Яркий свет выдаёт движение', 'Узкая аппаратная'],
-    tips: ['Проверяй декорации на проходимость', 'Аппаратная — ключевая цель', 'Не прячься за прозрачным стеклом'],
+    about: 'Улица, ресепшен, шесть павильонов, колосники, служебная зона и крыша. Декорации обманчивы: за фальшивыми стенами часто есть короткий проход.',
+    hazards: ['Ложные стены и тупики', 'Яркий свет выдаёт движение', 'Тёмные service и крыша'],
+    tips: ['Кнопка на ресепшене включает спринклеры — используй против погони', '4 энергостанции открывают актёрскую: service, offices, audiovisual', 'Change the Program: 4 антенны на крыше и конвертеры кассет'],
     rooms: [
-      room('studio', 'Студия', 40, 40, 260, 150, 'spawn', 'Старт в павильоне.'),
-      room('onair', 'Эфирная', 370, 40, 260, 150, 'objective', 'Главная аппаратура.'),
-      room('makeup', 'Гримёрка', 700, 40, 260, 150, 'loot', 'Шкафы и припасы.'),
-      CORRIDOR,
-      room('control', 'Аппаратная', 40, 390, 260, 170, 'objective', 'Тесная комната, мало выходов.'),
-      room('vents', 'Вентиляция', 370, 390, 260, 170, 'secret', 'Служебный лаз.'),
-      room('service', 'Служебный выход', 700, 390, 260, 170, 'exit', 'Выход за кулисами.')
+      cell(0, 0, 'street', 'Улица', 'spawn', 'Старт у входа в студию.', 'Street'),
+      cell(0, 1, 'reception', 'Ресепшен', 'terminal', 'Кнопка спринклеров.', 'Reception'),
+      cell(0, 2, 'lobby', 'Лобби', 'loot', 'Припасы и укрытия.', 'Lobby'),
+      cell(0, 3, 'studio1', 'Студия 1 (KVC News)', 'objective', 'Красный павильон новостей.', 'Studio 1'),
+      cell(1, 0, 'backstage', 'За кулисами', 'terminal', 'Энергостанции и декорации.', 'Backstage'),
+      cell(1, 1, 'studio2', 'Студия 2', 'objective', 'Зелёный павильон «Learn to Cook».', 'Studio 2'),
+      cell(1, 2, 'catwalks', 'Колосники', 'secret', 'Верхние проходы над павильонами.', 'Catwalks'),
+      cell(1, 3, 'service', 'Служебная зона', 'key', 'Энергостанции и служебный выход.', 'Service Area'),
+      cell(2, 0, 'offices', 'Офисы', 'key', 'Энергостанции для актёрской.', 'Offices'),
+      cell(2, 1, 'actors', 'Актёрская', 'objective', 'Открывается после 4 станций.', 'Actors Department'),
+      cell(2, 2, 'studio4', 'Студия 4 (Kress)', 'key', 'Подмена кассеты и пила.', 'Studio 4'),
+      cell(2, 3, 'roof', 'Крыша', 'exit', '4 антенны и финальный выход.', 'Rooftop')
     ],
-    links: [['studio','corridor'],['onair','corridor'],['makeup','corridor'],['control','corridor'],['vents','corridor'],['service','corridor']],
+    links: [
+      ...chain(['street', 'reception', 'lobby', 'studio1']),
+      ...chain(['backstage', 'studio2', 'catwalks', 'service']),
+      ...chain(['offices', 'actors', 'studio4', 'roof']),
+      link('street', 'backstage'), link('reception', 'studio2'), link('lobby', 'catwalks'), link('studio1', 'service'),
+      link('backstage', 'offices'), link('studio2', 'actors'), link('catwalks', 'studio4'), link('service', 'roof')
+    ],
     trials: [
       { id: 'silence-idol', name: 'Silence the Idol', ru: 'Заставить идола замолчать', kind: 'hunt', min: 14 },
       { id: 'cancel-broadcast', name: 'Cancel the Broadcast', ru: 'Отменить трансляцию', kind: 'sabotage', min: 15 },
@@ -405,19 +533,30 @@ const MAPS = [
     prime: 'The Warden',
     threat: 5,
     accent: '#fbbf24',
-    about: 'Бараки, поля и карцер под присмотром Надзирателя. Открытые поля просматриваются, поэтому используй постройки как укрытия.',
-    hazards: ['Открытые поля', 'Собачьи патрули', 'Карцер с одним выходом'],
-    tips: ['Двигайся вдоль заборов', 'Столовая — источник еды и медикаментов', 'Не теряй из виду ворота'],
+    about: 'Душевые, паноптикон, блоки A/B, прачечная, печи и свиноферма. Открытые поля просматриваются — используй постройки как укрытия и следи за собачьими патрулями.',
+    hazards: ['Открытые поля и собаки', 'Затопленный подвал', 'Карцер и паноптикон с одним выходом'],
+    tips: ['Старт — душевые: водяная система, выход в мастерскую', 'Ключ и документ — в кабинете надзирателя на втором этаже', 'Детонатор крафтится в мастерской; рычаг — в паноптиконе'],
     rooms: [
-      room('yard', 'Двор', 40, 40, 260, 150, 'spawn', 'Старт во дворе.'),
-      room('barracks', 'Бараки', 370, 40, 260, 150, 'objective', 'Кровати и шкафчики.'),
-      room('fields', 'Поля', 700, 40, 260, 150, 'objective', 'Открытая зона, плохо для погони.'),
-      CORRIDOR,
-      room('canteen', 'Столовая', 40, 390, 260, 170, 'loot', 'Припасы и укрытия.'),
-      room('solitary', 'Карцер', 370, 390, 260, 170, 'secret', 'Тайник, один выход.'),
-      room('gates', 'Ворота', 700, 390, 260, 170, 'exit', 'Выход с фермы.')
+      cell(0, 0, 'showers', 'Душевые', 'spawn', 'Старт, водяная система.', 'Showers'),
+      cell(0, 1, 'sideyard', 'Боковой двор', 'objective', 'Переход между корпусами.', 'Prison Side Yard'),
+      cell(0, 2, 'craft', 'Мастерская', 'key', 'Детонатор и ключи.', 'Crafting Room'),
+      cell(0, 3, 'blocka', 'Блок A: камеры', 'objective', 'Шкафчики и укрытия.', 'Block A Cells'),
+      cell(1, 0, 'panopticon', 'Паноптикон', 'terminal', 'Рычаг и обзор всех блоков.', 'Panopticon'),
+      cell(1, 1, 'laundry', 'Прачечная', 'loot', 'Припасы и укрытия.', 'Laundry Room'),
+      cell(1, 2, 'furnaces', 'Печи', 'danger', 'Жар и шум механизмы.', 'Furnaces Room'),
+      cell(1, 3, 'flooded', 'Затопленный подвал', 'danger', 'Медленное движение, один выход.', 'Basement Flooded Area'),
+      cell(2, 0, 'office', 'Кабинет надзирателя', 'key', 'Ключ с тела и документ.', 'Warden Office'),
+      cell(2, 1, 'pigclose', 'Свиноферма, ближ.', 'exit', 'Выход через ближние ворота.', 'Pig Farm Close Entrance'),
+      cell(2, 2, 'pigfar', 'Свиноферма, дал.', 'exit', 'Альтернативный выход.', 'Pig Farm Far Entrance'),
+      cell(2, 3, 'entrance', 'Вход в тюрьму', 'terminal', 'Контроль ворот.', 'Prison Entrance')
     ],
-    links: [['yard','corridor'],['barracks','corridor'],['fields','corridor'],['canteen','corridor'],['solitary','corridor'],['gates','corridor']],
+    links: [
+      ...chain(['showers', 'sideyard', 'craft', 'blocka']),
+      ...chain(['panopticon', 'laundry', 'furnaces', 'flooded']),
+      ...chain(['office', 'pigclose', 'pigfar', 'entrance']),
+      link('showers', 'panopticon'), link('sideyard', 'laundry'), link('craft', 'furnaces'), link('blocka', 'flooded'),
+      link('panopticon', 'office'), link('laundry', 'pigclose'), link('furnaces', 'pigfar'), link('flooded', 'entrance')
+    ],
     trials: [
       { id: 'locksock-warden', name: 'Locksock the Warden', ru: 'Упрятать надзирателя', kind: 'rescue', min: 16 }
     ]
@@ -429,19 +568,30 @@ const MAPS = [
     prime: 'Нет',
     threat: 2,
     accent: '#94a3b8',
-    about: 'Туториал и финальные сцены. Здесь меньше давления, но именно тут закладываются привычки: тишина, двери и маршруты.',
-    hazards: ['Мало припасов', 'Скрипящие половицы', 'Закрытые комнаты'],
-    tips: ['Изучи планировку без спешки', 'Запомни расположение шкафов', 'Не трать батарею без нужды'],
+    about: 'Туториал, Rebirth и финальные сцены. Точные внутриигровые названия комнат в открытых источниках отсутствуют, поэтому здесь авторская схема по гайдам: вестибюль, кабинет, ТВ-подсказки, лифты и двор.',
+    hazards: ['Мало припасов', 'Скрипящие половицы', 'Закрытые комнаты и большие гранты'],
+    tips: ['Ключи берутся по подсказкам телевизоров', 'Prime Assets могут прибывать через лифты — не засиживайся', 'Двор опасен: Night Hunter и Screamer'],
     rooms: [
-      room('hall', 'Холл', 40, 40, 260, 150, 'spawn', 'Старт, парадный вход.'),
-      room('office', 'Кабинет', 370, 40, 260, 150, 'objective', 'Документы Истермана.'),
-      room('library', 'Библиотека', 700, 40, 260, 150, 'loot', 'Книги и тайники.'),
-      CORRIDOR,
-      room('cellar', 'Подвал', 40, 390, 260, 170, 'secret', 'Тёмный подвал.'),
-      room('chapel', 'Часовня', 370, 390, 260, 170, 'objective', 'Финальная сцена.'),
-      room('gate', 'Ворота', 700, 390, 260, 170, 'exit', 'Выход с территории.')
+      cell(0, 0, 'hall', 'Парадный холл', 'spawn', 'Старт, вход в особняк.', 'Entrance Hall'),
+      cell(0, 1, 'office', 'Кабинет Истермана', 'objective', 'Документы и первые подсказки.', "Easterman's Office"),
+      cell(0, 2, 'library', 'Библиотека', 'loot', 'Книги и тайники.', 'Library'),
+      cell(0, 3, 'tv', 'Комната с ТВ', 'key', 'Подсказки к ключам.', 'TV Clue Room'),
+      cell(1, 0, 'elevator', 'Лифт', 'terminal', 'Прибытие Prime Assets.', 'Elevator'),
+      cell(1, 1, 'cellar', 'Подвал', 'secret', 'Тёмный подвал и тайники.', 'Cellar'),
+      cell(1, 2, 'guards', 'Коридор охранников', 'danger', 'Big Grunts и узкие проходы.', 'Guard Corridor'),
+      cell(1, 3, 'chapel', 'Часовня', 'objective', 'Финальная сцена.', 'Chapel'),
+      cell(2, 0, 'gates', 'Ворота', 'exit', 'Выход с территории.', 'Gates'),
+      cell(2, 1, 'courtyard', 'Двор', 'danger', 'Night Hunter и Screamer.', 'Courtyard'),
+      cell(2, 2, 'levers', 'Комнаты с рычагами', 'key', 'Механизмы Rebirth.', 'Lever Rooms'),
+      cell(2, 3, 'final', 'Финал', 'exit', 'Farewell / Rebirth. Статус уточняется.', 'Farewell')
     ],
-    links: [['hall','corridor'],['office','corridor'],['library','corridor'],['cellar','corridor'],['chapel','corridor'],['gate','corridor']],
+    links: [
+      ...chain(['hall', 'office', 'library', 'tv']),
+      ...chain(['elevator', 'cellar', 'guards', 'chapel']),
+      ...chain(['gates', 'courtyard', 'levers', 'final']),
+      link('hall', 'elevator'), link('office', 'cellar'), link('library', 'guards'), link('tv', 'chapel'),
+      link('elevator', 'gates'), link('cellar', 'courtyard'), link('guards', 'levers'), link('chapel', 'final')
+    ],
     trials: [
       { id: 'farewell', name: 'Farewell', ru: 'Прощание', kind: 'escape', min: 20 },
       { id: 'introduction', name: 'Introduction', ru: 'Введение', kind: 'investigate', min: 10 }
@@ -454,24 +604,36 @@ const MAPS = [
     prime: 'Все Prime Assets',
     threat: 5,
     accent: '#84cc16',
-    about: 'Узкие затопленные тоннели и насосные. Испытание на выносливость: мало места для манёвра, зато много слепых зон.',
-    hazards: ['Затопленные отсеки', 'Один маршрут отхода', 'Возможны несколько Prime Assets'],
-    tips: ['Не входи в воду без запаса стамины', 'Щитовая — ключевая точка', 'Слушай эхо шагов'],
+    about: 'Biohazard Disposal Facility: мусорный челнок, насосная, секции A/B, казни и шахтный тоннель. Мало места для манёвра, зато много слепых зон. Точные названия зон не подтверждены — схема авторская.',
+    hazards: ['Затопленные отсеки', 'Один маршрут отхода', 'Казни и несколько Prime Assets'],
+    tips: ['Жёлтые настенные лампы уничтожаются Microwave Triggers', 'Собирай лампы для инцинератора в секции A/B', 'Prime Assets рандомизируются: Койл, Гусберри, близнецы Кресс'],
     rooms: [
-      room('tunnel', 'Тоннель', 40, 40, 260, 150, 'spawn', 'Старт в тоннеле.'),
-      room('pumps', 'Насосная', 370, 40, 260, 150, 'objective', 'Механизмы и вода.'),
-      room('flooded', 'Затопленный отсек', 700, 40, 260, 150, 'danger', 'Медленное движение.'),
-      CORRIDOR,
-      room('electrical', 'Щитовая', 40, 390, 260, 170, 'objective', 'Электричество и терминалы.'),
-      room('cache', 'Тайник', 370, 390, 260, 170, 'secret', 'Редкие припасы.'),
-      room('hatch', 'Люк', 700, 390, 260, 170, 'exit', 'Финальный выход наверх.')
+      cell(0, 0, 'shuttle', 'Мусорный челнок', 'spawn', 'Старт посреди тоннеля.', 'Garbage Shuttle'),
+      cell(0, 1, 'repower', 'Питание', 'terminal', 'Восстановление питания.', 'Repower Machine'),
+      cell(0, 2, 'sectiona', 'Секция A', 'objective', 'Сжигание лоялистов.', 'Section A'),
+      cell(0, 3, 'bulbs', 'Сбор ламп', 'key', 'Лампы для инцинератора.', 'Bulb Collection'),
+      cell(1, 0, 'pumps', 'Насосная', 'terminal', 'Механизмы и вода.', 'Pump Room'),
+      cell(1, 1, 'flooded', 'Затопленный отсек', 'danger', 'Медленное движение.', 'Flooded Compartment'),
+      cell(1, 2, 'blast', 'Взрывная дверь', 'danger', 'Один маршрут отхода.', 'Blast-door Corridor'),
+      cell(1, 3, 'mines', 'Шахтный тоннель', 'terminal', 'Финальный маршрут.', 'Mineshaft Tunnel'),
+      cell(2, 0, 'lamps', 'Жёлтые лампы', 'key', 'Уничтожь Microwave Triggers.', 'Wall Lamps'),
+      cell(2, 1, 'chair', 'Казнь: стул', 'danger', 'Электрический стул.', 'Electric Chair'),
+      cell(2, 2, 'water', 'Казнь: утопление', 'danger', 'Камера утопления.', 'Drowning Chamber'),
+      cell(2, 3, 'hatch', 'Люк наверх', 'exit', 'Финальный выход.', 'Exit Hatch')
     ],
-    links: [['tunnel','corridor'],['pumps','corridor'],['flooded','corridor'],['electrical','corridor'],['cache','corridor'],['hatch','corridor']],
+    links: [
+      ...chain(['shuttle', 'repower', 'sectiona', 'bulbs']),
+      ...chain(['pumps', 'flooded', 'blast', 'mines']),
+      ...chain(['lamps', 'chair', 'water', 'hatch']),
+      link('shuttle', 'pumps'), link('repower', 'flooded'), link('sectiona', 'blast'), link('bulbs', 'mines'),
+      link('pumps', 'lamps'), link('flooded', 'chair'), link('blast', 'water'), link('mines', 'hatch')
+    ],
     trials: [
       { id: 'escape-lies', name: 'Escape the Lies', ru: 'Побег из лжи', kind: 'escape', min: 18 }
     ]
   }
 ];
+
 
 const ITEMS = [
   { id: 'lockpick', name: 'Отмычка', en: 'Lockpick', cat: 'Инструмент', rarity: 'Обычная', effect: 'Открывает замки на ящиках и дверях. Расходуется.', tip: 'Носи минимум одну: за закрытыми ящиками часто лежит большой медикамент или батарея.' },

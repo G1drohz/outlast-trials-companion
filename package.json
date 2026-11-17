@@ -1,6 +1,6 @@
 {
   "name": "outlast-trials-companion",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "description": "Outlast Trials Companion — справочник, таймер с чеклистом и интерактивные карты испытаний",
   "author": "G1drohz",
@@ -11,6 +11,7 @@
     "dev": "electron .",
     "icons": "node scripts/generate-icons.mjs",
     "build:win": "npm run icons && electron-builder --win nsis portable --x64 --publish never",
+    "build:linux": "npm run icons && electron-builder --linux AppImage deb --x64 --publish never",
     "cap:add": "npx cap add android",
     "cap:sync": "npx cap sync android",
     "build:apk": "cd android && ./gradlew assembleDebug --no-daemon",
@@ -58,6 +59,19 @@
     },
     "portable": {
       "artifactName": "OutlastTrialsCompanion-Portable-${version}.${ext}"
+    },
+    "linux": {
+      "target": [
+        { "target": "AppImage", "arch": ["x64"] },
+        { "target": "deb", "arch": ["x64"] }
+      ],
+      "icon": "build/icon.png",
+      "category": "Utility",
+      "artifactName": "OutlastTrialsCompanion-${version}-${arch}.${ext}"
+    },
+    "deb": {
+      "synopsis": "Неофициальный компаньон для The Outlast Trials",
+      "description": "Справочник, таймер с чеклистом и интерактивные карты испытаний The Outlast Trials."
     }
   }
 }
